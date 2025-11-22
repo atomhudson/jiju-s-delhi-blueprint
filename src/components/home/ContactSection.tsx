@@ -104,7 +104,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">Email</h3>
-                  <p className="text-muted-foreground">info@jijuthebuilder.com</p>
+                  <p className="text-muted-foreground">info@stumbhconstructions.com</p>
                   <p className="text-sm text-muted-foreground">We'll respond within 24 hours</p>
                 </div>
               </div>

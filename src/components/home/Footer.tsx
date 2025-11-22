@@ -8,7 +8,7 @@ const Footer = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <Building2 className="w-6 h-6 text-primary" />
-              <span className="text-xl font-bold">Jiju the Builder</span>
+              <span className="text-xl font-heading font-bold">Stumbh Constructions</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Building dreams since 1970s. Three generations of construction excellence across Delhi.
@@ -48,7 +48,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Jiju the Builder. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Stumbh Constructions. All rights reserved.</p>
         </div>
       </div>
     </footer>

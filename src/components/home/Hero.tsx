@@ -26,9 +26,9 @@ const Hero = () => {
               <span className="text-sm font-medium text-primary">Building Excellence Since 1970s</span>
             </div>
             
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold leading-tight">
               <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                Jiju the Builder
+                Stumbh Constructions
               </span>
               <br />
               <span className="text-foreground">Crafting Dreams into Reality</span>
@@ -75,120 +75,184 @@ const Hero = () => {
             </div>
           </motion.div>
           
-          {/* Animated building illustration */}
+          {/* Construction Blueprint Animation */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.2 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
             className="relative hidden lg:block"
           >
             <div className="relative w-full aspect-square max-w-lg mx-auto">
+              {/* Grid background */}
               <svg
                 viewBox="0 0 400 400"
-                className="w-full h-full drop-shadow-2xl"
+                className="w-full h-full"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                {/* Building base */}
-                <motion.rect
-                  x="100"
-                  y="300"
-                  width="200"
-                  height="80"
-                  fill="hsl(15, 65%, 55%)"
-                  initial={{ scaleY: 0, originY: 1 }}
-                  animate={{ scaleY: 1 }}
-                  transition={{ duration: 0.6, delay: 0.4 }}
-                />
+                {/* Blueprint grid */}
+                <defs>
+                  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="hsl(33, 29%, 70%)" strokeWidth="0.5" opacity="0.3"/>
+                  </pattern>
+                </defs>
+                <rect width="400" height="400" fill="url(#grid)" />
                 
-                {/* Floor 2 */}
-                <motion.rect
-                  x="100"
-                  y="220"
-                  width="200"
-                  height="80"
-                  fill="hsl(25, 60%, 50%)"
-                  initial={{ scaleY: 0, originY: 1 }}
-                  animate={{ scaleY: 1 }}
-                  transition={{ duration: 0.6, delay: 0.7 }}
-                />
-                
-                {/* Floor 3 */}
-                <motion.rect
-                  x="100"
-                  y="140"
-                  width="200"
-                  height="80"
-                  fill="hsl(15, 65%, 55%)"
-                  initial={{ scaleY: 0, originY: 1 }}
-                  animate={{ scaleY: 1 }}
-                  transition={{ duration: 0.6, delay: 1 }}
-                />
-                
-                {/* Roof */}
-                <motion.polygon
-                  points="200,60 90,140 310,140"
-                  fill="hsl(25, 45%, 35%)"
-                  initial={{ scale: 0, originX: 0.5, originY: 1 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: 0.6, delay: 1.3 }}
-                />
-                
-                {/* Windows - Floor 1 */}
-                {[140, 180, 220, 260].map((x, i) => (
+                {/* Construction crane */}
+                <motion.g
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.4 }}
+                >
+                  {/* Crane base */}
+                  <rect x="180" y="300" width="40" height="100" fill="hsl(30, 25%, 40%)" />
+                  
+                  {/* Crane tower */}
+                  <rect x="195" y="150" width="10" height="150" fill="hsl(30, 25%, 40%)" />
+                  
+                  {/* Crane arm */}
+                  <motion.line
+                    x1="200"
+                    y1="150"
+                    x2="350"
+                    y2="150"
+                    stroke="hsl(30, 25%, 40%)"
+                    strokeWidth="8"
+                    initial={{ scaleX: 0, originX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 1, delay: 0.8 }}
+                  />
+                  
+                  {/* Counter weight */}
                   <motion.rect
-                    key={`w1-${i}`}
-                    x={x}
+                    x="90"
+                    y="140"
+                    width="40"
+                    height="30"
+                    fill="hsl(33, 29%, 70%)"
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 1.2 }}
+                  />
+                  <motion.line
+                    x1="200"
+                    y1="150"
+                    x2="130"
+                    y2="150"
+                    stroke="hsl(30, 25%, 40%)"
+                    strokeWidth="6"
+                    initial={{ scaleX: 0, originX: 1 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 0.8, delay: 1 }}
+                  />
+                  
+                  {/* Hook and cable */}
+                  <motion.line
+                    x1="300"
+                    y1="150"
+                    x2="300"
+                    y2="250"
+                    stroke="hsl(30, 25%, 40%)"
+                    strokeWidth="2"
+                    initial={{ scaleY: 0, originY: 0 }}
+                    animate={{ scaleY: 1 }}
+                    transition={{ duration: 1, delay: 1.5, repeat: Infinity, repeatType: "reverse", repeatDelay: 1 }}
+                  />
+                  <motion.circle
+                    cx="300"
+                    cy="250"
+                    r="8"
+                    fill="hsl(33, 29%, 70%)"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1, y: [0, 20, 0] }}
+                    transition={{ duration: 2, delay: 2, repeat: Infinity, repeatDelay: 1 }}
+                  />
+                </motion.g>
+                
+                {/* Building outline */}
+                <motion.g
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 1, delay: 0.6 }}
+                >
+                  {/* Foundation */}
+                  <motion.rect
+                    x="50"
                     y="320"
-                    width="30"
-                    height="40"
-                    fill="hsl(33, 30%, 97%)"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3, delay: 0.5 + i * 0.1 }}
+                    width="120"
+                    height="80"
+                    fill="none"
+                    stroke="hsl(33, 29%, 70%)"
+                    strokeWidth="3"
+                    strokeDasharray="5,5"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 2, delay: 1 }}
                   />
-                ))}
-                
-                {/* Windows - Floor 2 */}
-                {[140, 180, 220, 260].map((x, i) => (
-                  <motion.rect
-                    key={`w2-${i}`}
-                    x={x}
-                    y="240"
-                    width="30"
-                    height="40"
-                    fill="hsl(33, 30%, 97%)"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3, delay: 0.8 + i * 0.1 }}
+                  
+                  {/* Walls */}
+                  <motion.line
+                    x1="50"
+                    y1="320"
+                    x2="50"
+                    y2="200"
+                    stroke="hsl(33, 29%, 70%)"
+                    strokeWidth="3"
+                    strokeDasharray="5,5"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 1.5, delay: 2.5 }}
                   />
-                ))}
-                
-                {/* Windows - Floor 3 */}
-                {[140, 180, 220, 260].map((x, i) => (
-                  <motion.rect
-                    key={`w3-${i}`}
-                    x={x}
-                    y="160"
-                    width="30"
-                    height="40"
-                    fill="hsl(33, 30%, 97%)"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3, delay: 1.1 + i * 0.1 }}
+                  <motion.line
+                    x1="170"
+                    y1="320"
+                    x2="170"
+                    y2="200"
+                    stroke="hsl(33, 29%, 70%)"
+                    strokeWidth="3"
+                    strokeDasharray="5,5"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 1.5, delay: 2.5 }}
                   />
-                ))}
+                  
+                  {/* Roof line */}
+                  <motion.line
+                    x1="50"
+                    y1="200"
+                    x2="110"
+                    y2="150"
+                    stroke="hsl(33, 29%, 70%)"
+                    strokeWidth="3"
+                    strokeDasharray="5,5"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 1, delay: 3.8 }}
+                  />
+                  <motion.line
+                    x1="170"
+                    y1="200"
+                    x2="110"
+                    y2="150"
+                    stroke="hsl(33, 29%, 70%)"
+                    strokeWidth="3"
+                    strokeDasharray="5,5"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 1, delay: 3.8 }}
+                  />
+                </motion.g>
                 
-                {/* Door */}
-                <motion.rect
-                  x="180"
-                  y="330"
-                  width="40"
-                  height="50"
-                  fill="hsl(25, 45%, 35%)"
-                  initial={{ scaleY: 0, originY: 1 }}
-                  animate={{ scaleY: 1 }}
-                  transition={{ duration: 0.4, delay: 0.6 }}
-                />
+                {/* Measurement lines */}
+                <motion.g
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.6 }}
+                  transition={{ duration: 0.5, delay: 4.5 }}
+                >
+                  <line x1="40" y1="320" x2="40" y2="200" stroke="hsl(33, 29%, 70%)" strokeWidth="1" />
+                  <line x1="35" y1="320" x2="45" y2="320" stroke="hsl(33, 29%, 70%)" strokeWidth="1" />
+                  <line x1="35" y1="200" x2="45" y2="200" stroke="hsl(33, 29%, 70%)" strokeWidth="1" />
+                  <text x="25" y="265" fill="hsl(33, 29%, 70%)" fontSize="12" fontFamily="monospace">8m</text>
+                </motion.g>
               </svg>
             </div>
           </motion.div>
