@@ -1,34 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
 
 @layer base {
   :root {
     /* Soft neutral palette - Stumbh Constructions */
     --background: 40 30% 97%;
-    --foreground: 33 15% 25%;
+    --foreground: 30 20% 20%;
 
     --card: 30 27% 91%;
-    --card-foreground: 33 15% 25%;
+    --card-foreground: 30 20% 20%;
 
     --popover: 30 27% 91%;
-    --popover-foreground: 33 15% 25%;
+    --popover-foreground: 30 20% 20%;
 
     /* Warm tan primary */
     --primary: 33 29% 70%;
-    --primary-foreground: 33 15% 25%;
+    --primary-foreground: 30 20% 20%;
 
     /* Light beige secondary */
     --secondary: 30 27% 91%;
-    --secondary-foreground: 33 15% 25%;
+    --secondary-foreground: 30 20% 20%;
 
     /* Medium beige muted */
     --muted: 27 20% 82%;
-    --muted-foreground: 33 15% 45%;
+    --muted-foreground: 30 15% 45%;
 
     /* Rich brown accent */
     --accent: 30 25% 40%;
@@ -37,22 +35,15 @@ All colors MUST be HSL.
     --destructive: 0 72% 51%;
     --destructive-foreground: 40 30% 97%;
 
-    --border: 27 20% 82%;
-    --input: 27 20% 82%;
+    --border: 30 20% 85%;
+    --input: 30 20% 85%;
     --ring: 33 29% 70%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    /* Gradients */
-    --gradient-warm: linear-gradient(135deg, hsl(33 29% 70%), hsl(30 25% 60%));
-    --gradient-subtle: linear-gradient(180deg, hsl(40 30% 97%), hsl(30 27% 91%));
-    
     /* Shadows */
-    --shadow-soft: 0 4px 20px -4px hsl(33 20% 50% / 0.08);
-    --shadow-medium: 0 8px 30px -6px hsl(33 20% 50% / 0.12);
-    
-    /* Animation */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --shadow-soft: 0 4px 20px -4px hsl(30 20% 50% / 0.08);
+    --shadow-medium: 0 8px 30px -6px hsl(30 20% 50% / 0.12);
   }
 
   .dark {
@@ -92,6 +83,17 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer utilities {
+  .font-heading {
+    font-family: 'Playfair Display', serif;
   }
 }

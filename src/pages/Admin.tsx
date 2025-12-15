@@ -89,10 +89,9 @@ const Admin = () => {
       const { error } = await supabase.from("projects").insert([{
         title: project.title,
         address: project.address,
-        lat: parseFloat(project.lat) || null,
-        lon: parseFloat(project.lon) || null,
-        status: project.status,
-        category: project.category,
+        latitude: parseFloat(project.lat) || 28.6139,
+        longitude: parseFloat(project.lon) || 77.2090,
+        status: project.status as "ongoing" | "completed" | "planned",
         description: project.description,
       }]);
       if (error) throw error;
@@ -117,7 +116,7 @@ const Admin = () => {
 
   // Update inquiry status
   const updateInquiryStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status }: { id: string; status: "new" | "in_progress" | "resolved" }) => {
       const { error } = await supabase
         .from("inquiries")
         .update({ status })
@@ -310,7 +309,6 @@ const Admin = () => {
                       <Badge variant={project.status === "completed" ? "default" : "secondary"}>
                         {project.status}
                       </Badge>
-                      <Badge variant="outline">{project.category}</Badge>
                     </div>
                   </CardContent>
                 </Card>
@@ -357,14 +355,14 @@ const Admin = () => {
                     </div>
                     <div className="ml-4">
                       <Select
-                        value={inquiry.status || "pending"}
-                        onValueChange={(value) => updateInquiryStatus.mutate({ id: inquiry.id, status: value })}
+                        value={inquiry.status || "new"}
+                        onValueChange={(value) => updateInquiryStatus.mutate({ id: inquiry.id, status: value as "new" | "in_progress" | "resolved" })}
                       >
                         <SelectTrigger className="w-32">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="new">New</SelectItem>
                           <SelectItem value="in_progress">In Progress</SelectItem>
                           <SelectItem value="resolved">Resolved</SelectItem>
                         </SelectContent>

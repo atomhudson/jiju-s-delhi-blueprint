@@ -118,8 +118,8 @@ const Interior = () => {
                         <Home className="w-12 h-12 text-muted-foreground/30" />
                       </div>
                       <div className="absolute top-3 left-3">
-                        <Badge className={categoryColors[project.category || "FACADE"]}>
-                          {project.category || "General"}
+                        <Badge className={categoryColors["FACADE"]}>
+                          General
                         </Badge>
                       </div>
                     </div>
