@@ -1,0 +1,505 @@
+import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { useParams, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/home/Footer";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+    ArrowLeft,
+    MapPin,
+    Calendar,
+    Clock,
+    CheckCircle2,
+    ChevronLeft,
+    ChevronRight,
+    X,
+    Expand,
+    Bath,
+    Bed,
+    Coffee,
+    ChefHat,
+    Home,
+    Armchair,
+    TreePine,
+    Sparkles
+} from "lucide-react";
+import { useState, useEffect } from "react";
+
+// Fallback images
+const fallbackImages = [
+    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80",
+    "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80",
+    "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&q=80",
+];
+
+const categoryData: Record<string, { icon: any; gradient: string; accent: string }> = {
+    BATHROOM: {
+        icon: Bath,
+        gradient: "from-sky-400/20 via-blue-500/10 to-indigo-500/20",
+        accent: "bg-sky-500"
+    },
+    BEDROOM: {
+        icon: Bed,
+        gradient: "from-violet-400/20 via-purple-500/10 to-fuchsia-500/20",
+        accent: "bg-violet-500"
+    },
+    DINING: {
+        icon: Coffee,
+        gradient: "from-amber-400/20 via-orange-500/10 to-red-500/20",
+        accent: "bg-amber-500"
+    },
+    KITCHEN: {
+        icon: ChefHat,
+        gradient: "from-rose-400/20 via-red-500/10 to-pink-500/20",
+        accent: "bg-rose-500"
+    },
+    FACADE: {
+        icon: Home,
+        gradient: "from-slate-400/20 via-zinc-500/10 to-stone-500/20",
+        accent: "bg-slate-500"
+    },
+    "LIVING ROOM": {
+        icon: Armchair,
+        gradient: "from-emerald-400/20 via-green-500/10 to-teal-500/20",
+        accent: "bg-emerald-500"
+    },
+    TERRACE: {
+        icon: TreePine,
+        gradient: "from-lime-400/20 via-green-500/10 to-emerald-500/20",
+        accent: "bg-lime-500"
+    },
+};
+
+const getStatusConfig = (status: string) => {
+    switch (status) {
+        case "completed":
+            return { icon: CheckCircle2, label: "Completed", color: "text-emerald-500" };
+        case "ongoing":
+            return { icon: Clock, label: "Ongoing", color: "text-amber-500" };
+        default:
+            return { icon: Calendar, label: "Planned", color: "text-blue-500" };
+    }
+};
+
+const ProjectDetail = () => {
+    const { id } = useParams<{ id: string }>();
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+
+    // Fetch project details
+    const { data: project, isLoading: projectLoading } = useQuery({
+        queryKey: ["project-detail", id],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from("projects")
+                .select("*, project_images(*)")
+                .eq("id", id)
+                .single();
+            if (error) throw error;
+            return data;
+        },
+        enabled: !!id,
+    });
+
+    // Fetch related projects
+    const { data: relatedProjects } = useQuery({
+        queryKey: ["related-projects", project?.category],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from("projects")
+                .select("*, project_images(*)")
+                .eq("category", project?.category)
+                .neq("id", id)
+                .limit(3);
+            if (error) throw error;
+            return data;
+        },
+        enabled: !!project?.category,
+    });
+
+    // Get images array
+    const getImageUrl = (storagePath: string) => {
+        const { data } = supabase.storage.from("project-images").getPublicUrl(storagePath);
+        return data.publicUrl;
+    };
+
+    const images = project?.project_images?.length
+        ? project.project_images.map((img: any) => ({
+            url: getImageUrl(img.storage_path),
+            caption: img.caption
+        }))
+        : fallbackImages.map(url => ({ url, caption: null }));
+
+    const categoryKey = project?.category?.toUpperCase() || "FACADE";
+    const catData = categoryData[categoryKey] || categoryData.FACADE;
+    const CategoryIcon = catData.icon;
+    const statusConfig = project ? getStatusConfig(project.status) : null;
+    const StatusIcon = statusConfig?.icon;
+
+    // Keyboard navigation for lightbox
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (!lightboxOpen) return;
+            if (e.key === "Escape") setLightboxOpen(false);
+            if (e.key === "ArrowRight") setSelectedImageIndex((prev) => (prev + 1) % images.length);
+            if (e.key === "ArrowLeft") setSelectedImageIndex((prev) => (prev - 1 + images.length) % images.length);
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [lightboxOpen, images.length]);
+
+    if (projectLoading) {
+        return (
+            <div className="min-h-screen bg-background">
+                <Navbar />
+                <main className="pt-24 pb-16">
+                    <div className="container mx-auto px-6">
+                        <Skeleton className="h-8 w-32 mb-8" />
+                        <Skeleton className="h-[60vh] w-full rounded-3xl mb-8" />
+                        <div className="grid md:grid-cols-2 gap-8">
+                            <Skeleton className="h-48" />
+                            <Skeleton className="h-48" />
+                        </div>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    if (!project) {
+        return (
+            <div className="min-h-screen bg-background">
+                <Navbar />
+                <main className="pt-24 pb-16 flex items-center justify-center">
+                    <div className="text-center">
+                        <Home className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+                        <h2 className="text-2xl font-heading font-bold mb-2">Project Not Found</h2>
+                        <p className="text-muted-foreground mb-6">The project you're looking for doesn't exist.</p>
+                        <Link
+                            to="/interior"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-accent-foreground rounded-full font-medium"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            Back to Projects
+                        </Link>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-background">
+            <Navbar />
+
+            <main className="pt-24 pb-16">
+                {/* Back button & Header */}
+                <section className="container mx-auto px-6 mb-8">
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                    >
+                        <Link
+                            to="/interior"
+                            className="inline-flex items-center gap-2 text-muted-foreground hover:text-accent transition-colors mb-6 group"
+                        >
+                            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                            Back to Projects
+                        </Link>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex flex-wrap items-start gap-4 justify-between"
+                    >
+                        <div>
+                            <div className="flex items-center gap-3 mb-3">
+                                <Badge className={`${catData.accent} text-white border-0`}>
+                                    <CategoryIcon className="w-3 h-3 mr-1" />
+                                    {project.category || "General"}
+                                </Badge>
+                                {StatusIcon && (
+                                    <Badge variant="outline" className={`${statusConfig?.color} border-current`}>
+                                        <StatusIcon className="w-3 h-3 mr-1" />
+                                        {statusConfig?.label}
+                                    </Badge>
+                                )}
+                            </div>
+                            <h1 className="text-3xl md:text-5xl font-heading font-bold text-foreground">
+                                {project.title}
+                            </h1>
+                        </div>
+                    </motion.div>
+                </section>
+
+                {/* Main Gallery */}
+                <section className="container mx-auto px-6 mb-12">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="relative"
+                    >
+                        {/* Main Image */}
+                        <div
+                            className="relative aspect-[16/9] md:aspect-[21/9] rounded-3xl overflow-hidden bg-secondary cursor-pointer group"
+                            onClick={() => setLightboxOpen(true)}
+                        >
+                            <AnimatePresence mode="wait">
+                                <motion.img
+                                    key={selectedImageIndex}
+                                    src={images[selectedImageIndex]?.url}
+                                    alt={project.title}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="w-full h-full object-cover"
+                                />
+                            </AnimatePresence>
+
+                            {/* Expand overlay */}
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm rounded-full p-3">
+                                    <Expand className="w-6 h-6 text-foreground" />
+                                </div>
+                            </div>
+
+                            {/* Image counter */}
+                            <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-full text-white text-sm">
+                                {selectedImageIndex + 1} / {images.length}
+                            </div>
+
+                            {/* Navigation arrows */}
+                            {images.length > 1 && (
+                                <>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setSelectedImageIndex((prev) => (prev - 1 + images.length) % images.length); }}
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                                    >
+                                        <ChevronLeft className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setSelectedImageIndex((prev) => (prev + 1) % images.length); }}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                                    >
+                                        <ChevronRight className="w-5 h-5" />
+                                    </button>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Thumbnails */}
+                        {images.length > 1 && (
+                            <div className="flex gap-3 mt-4 overflow-x-auto pb-2 scrollbar-hide">
+                                {images.map((img: any, index: number) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => setSelectedImageIndex(index)}
+                                        className={`
+                      flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden transition-all duration-300
+                      ${index === selectedImageIndex
+                                                ? "ring-2 ring-accent ring-offset-2 ring-offset-background"
+                                                : "opacity-60 hover:opacity-100"
+                                            }
+                    `}
+                                    >
+                                        <img src={img.url} alt="" className="w-full h-full object-cover" />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </motion.div>
+                </section>
+
+                {/* Project Details */}
+                <section className="container mx-auto px-6 mb-16">
+                    <div className="grid md:grid-cols-3 gap-8">
+                        {/* Description */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="md:col-span-2"
+                        >
+                            <h2 className="text-2xl font-heading font-bold mb-4">About This Project</h2>
+                            <p className="text-muted-foreground leading-relaxed text-lg">
+                                {project.description || "A stunning transformation that showcases our craftsmanship and attention to detail. Every element has been carefully designed to create a harmonious and functional space that exceeds expectations."}
+                            </p>
+                        </motion.div>
+
+                        {/* Info Card */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                            className="bg-card rounded-2xl p-6 border border-border/50"
+                        >
+                            <h3 className="text-lg font-heading font-semibold mb-4">Project Details</h3>
+
+                            <div className="space-y-4">
+                                {/* Location */}
+                                <div className="flex items-start gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-secondary/80 flex items-center justify-center flex-shrink-0">
+                                        <MapPin className="w-5 h-5 text-accent" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Location</p>
+                                        <p className="font-medium">{project.address}</p>
+                                    </div>
+                                </div>
+
+                                {/* Timeline */}
+                                {(project.start_date || project.end_date) && (
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-secondary/80 flex items-center justify-center flex-shrink-0">
+                                            <Calendar className="w-5 h-5 text-accent" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Timeline</p>
+                                            <p className="font-medium">
+                                                {project.start_date && new Date(project.start_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
+                                                {project.start_date && project.end_date && " - "}
+                                                {project.end_date && new Date(project.end_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Division */}
+                                {project.division && (
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-secondary/80 flex items-center justify-center flex-shrink-0">
+                                            <Sparkles className="w-5 h-5 text-accent" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Division</p>
+                                            <p className="font-medium">{project.division}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                </section>
+
+                {/* Related Projects */}
+                {relatedProjects && relatedProjects.length > 0 && (
+                    <section className="container mx-auto px-6">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                        >
+                            <h2 className="text-2xl font-heading font-bold mb-6">Related Projects</h2>
+
+                            <div className="grid md:grid-cols-3 gap-6">
+                                {relatedProjects.map((relProject: any, index: number) => {
+                                    const relImages = relProject.project_images?.length
+                                        ? relProject.project_images
+                                        : [{ storage_path: null }];
+                                    const relImageUrl = relImages[0].storage_path
+                                        ? getImageUrl(relImages[0].storage_path)
+                                        : fallbackImages[index % fallbackImages.length];
+
+                                    return (
+                                        <Link key={relProject.id} to={`/project/${relProject.id}`}>
+                                            <motion.div
+                                                whileHover={{ y: -4 }}
+                                                className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer"
+                                            >
+                                                <img
+                                                    src={relImageUrl}
+                                                    alt={relProject.title}
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                                                <div className="absolute bottom-4 left-4 right-4">
+                                                    <h3 className="text-white font-heading font-semibold">{relProject.title}</h3>
+                                                    <p className="text-white/70 text-sm flex items-center gap-1 mt-1">
+                                                        <MapPin className="w-3 h-3" />
+                                                        {relProject.address?.split(",")[0]}
+                                                    </p>
+                                                </div>
+                                            </motion.div>
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        </motion.div>
+                    </section>
+                )}
+            </main>
+
+            <Footer />
+
+            {/* Lightbox */}
+            <AnimatePresence>
+                {lightboxOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+                        onClick={() => setLightboxOpen(false)}
+                    >
+                        {/* Close button */}
+                        <button
+                            className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                            onClick={() => setLightboxOpen(false)}
+                        >
+                            <X className="w-6 h-6 text-white" />
+                        </button>
+
+                        {/* Image */}
+                        <motion.img
+                            key={selectedImageIndex}
+                            src={images[selectedImageIndex]?.url}
+                            alt=""
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="max-w-[90vw] max-h-[85vh] object-contain"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+
+                        {/* Navigation */}
+                        {images.length > 1 && (
+                            <>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setSelectedImageIndex((prev) => (prev - 1 + images.length) % images.length); }}
+                                    className="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                                >
+                                    <ChevronLeft className="w-6 h-6 text-white" />
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setSelectedImageIndex((prev) => (prev + 1) % images.length); }}
+                                    className="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                                >
+                                    <ChevronRight className="w-6 h-6 text-white" />
+                                </button>
+                            </>
+                        )}
+
+                        {/* Counter */}
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white">
+                            {selectedImageIndex + 1} / {images.length}
+                        </div>
+
+                        {/* Caption */}
+                        {images[selectedImageIndex]?.caption && (
+                            <div className="absolute bottom-16 left-1/2 -translate-x-1/2 text-white/80 text-center max-w-lg">
+                                {images[selectedImageIndex].caption}
+                            </div>
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+export default ProjectDetail;

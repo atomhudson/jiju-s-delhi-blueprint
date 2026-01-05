@@ -21,17 +21,17 @@ const formSchema = z.object({
 });
 
 // Floating contact card component
-const ContactCard = ({ 
-  icon: Icon, 
-  title, 
-  value, 
-  subtext, 
-  delay 
-}: { 
-  icon: any; 
-  title: string; 
-  value: string; 
-  subtext: string; 
+const ContactCard = ({
+  icon: Icon,
+  title,
+  value,
+  subtext,
+  delay
+}: {
+  icon: any;
+  title: string;
+  value: string;
+  subtext: string;
   delay: number;
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -68,9 +68,9 @@ const ContactCard = ({
       className="group relative p-6 bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl hover:border-primary/40 transition-all duration-300 cursor-pointer"
     >
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      
+
       <div className="relative z-10 flex items-start gap-4">
-        <motion.div 
+        <motion.div
           className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0"
           whileHover={{ scale: 1.1, rotate: 5 }}
           transition={{ type: "spring", stiffness: 400 }}
@@ -169,10 +169,10 @@ const ContactSection = () => {
   };
 
   return (
-    <section id="contact" className="relative py-32 overflow-hidden">
+    <section id="contact" className="relative py-32 overflow-hidden mb-10">
       {/* Background decorations */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/20 to-background" />
-      
+
       {/* Animated grid pattern */}
       <div className="absolute inset-0 opacity-[0.03]">
         <div className="absolute inset-0" style={{
@@ -186,7 +186,7 @@ const ContactSection = () => {
 
       {/* Floating orbs */}
       <motion.div
-        animate={{ 
+        animate={{
           y: [-20, 20, -20],
           x: [-10, 10, -10],
         }}
@@ -194,7 +194,7 @@ const ContactSection = () => {
         className="absolute top-20 left-[10%] w-72 h-72 bg-primary/10 rounded-full blur-3xl"
       />
       <motion.div
-        animate={{ 
+        animate={{
           y: [20, -20, 20],
           x: [10, -10, 10],
         }}
@@ -220,10 +220,10 @@ const ContactSection = () => {
             <Sparkles className="w-4 h-4 text-accent" />
             <span className="text-sm font-medium text-accent">Get in Touch</span>
           </motion.div>
-          
+
           <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 font-heading">
             <span className="block text-foreground">Let's Create</span>
-            <motion.span 
+            <motion.span
               className="block bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] bg-clip-text text-transparent"
               animate={{ backgroundPosition: ["0%", "200%"] }}
               transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
@@ -237,7 +237,7 @@ const ContactSection = () => {
         </motion.div>
 
         {/* Feature pills */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -284,10 +284,10 @@ const ContactSection = () => {
           >
             {/* Glowing border effect */}
             <div className="absolute -inset-[1px] bg-gradient-to-r from-primary/50 via-accent/50 to-primary/50 rounded-3xl opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-500" />
-            
+
             <div className="relative bg-card/90 backdrop-blur-md border border-border/50 rounded-3xl p-8 md:p-10 shadow-2xl">
               {/* Form header */}
-              <motion.div 
+              <motion.div
                 className="mb-8"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -309,14 +309,13 @@ const ContactSection = () => {
                             <FormLabel className="text-foreground font-medium">Full Name</FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <Input 
-                                  placeholder="Your name" 
+                                <Input
+                                  placeholder="Your name"
                                   {...field}
                                   onFocus={() => setFocusedField('name')}
                                   onBlur={() => setFocusedField(null)}
-                                  className={`h-12 bg-background/50 border-border/50 rounded-xl transition-all duration-300 ${
-                                    focusedField === 'name' ? 'border-primary shadow-[0_0_20px_rgba(var(--primary),0.2)]' : ''
-                                  }`}
+                                  className={`h-12 bg-background/50 border-border/50 rounded-xl transition-all duration-300 ${focusedField === 'name' ? 'border-primary shadow-[0_0_20px_rgba(var(--primary),0.2)]' : ''
+                                    }`}
                                 />
                               </div>
                             </FormControl>
@@ -334,15 +333,14 @@ const ContactSection = () => {
                           <FormItem>
                             <FormLabel className="text-foreground font-medium">Email</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="email" 
-                                placeholder="your.email@example.com" 
+                              <Input
+                                type="email"
+                                placeholder="your.email@example.com"
                                 {...field}
                                 onFocus={() => setFocusedField('email')}
                                 onBlur={() => setFocusedField(null)}
-                                className={`h-12 bg-background/50 border-border/50 rounded-xl transition-all duration-300 ${
-                                  focusedField === 'email' ? 'border-primary shadow-[0_0_20px_rgba(var(--primary),0.2)]' : ''
-                                }`}
+                                className={`h-12 bg-background/50 border-border/50 rounded-xl transition-all duration-300 ${focusedField === 'email' ? 'border-primary shadow-[0_0_20px_rgba(var(--primary),0.2)]' : ''
+                                  }`}
                               />
                             </FormControl>
                             <FormMessage />
@@ -361,14 +359,13 @@ const ContactSection = () => {
                           <FormItem>
                             <FormLabel className="text-foreground font-medium">Phone Number</FormLabel>
                             <FormControl>
-                              <Input 
-                                placeholder="+91 98765 43210" 
+                              <Input
+                                placeholder="+91 98765 43210"
                                 {...field}
                                 onFocus={() => setFocusedField('phone')}
                                 onBlur={() => setFocusedField(null)}
-                                className={`h-12 bg-background/50 border-border/50 rounded-xl transition-all duration-300 ${
-                                  focusedField === 'phone' ? 'border-primary shadow-[0_0_20px_rgba(var(--primary),0.2)]' : ''
-                                }`}
+                                className={`h-12 bg-background/50 border-border/50 rounded-xl transition-all duration-300 ${focusedField === 'phone' ? 'border-primary shadow-[0_0_20px_rgba(var(--primary),0.2)]' : ''
+                                  }`}
                               />
                             </FormControl>
                             <FormMessage />
@@ -417,9 +414,8 @@ const ContactSection = () => {
                           <FormControl>
                             <Textarea
                               placeholder="Describe your dream space, budget range, and timeline..."
-                              className={`min-h-[140px] bg-background/50 border-border/50 rounded-xl resize-none transition-all duration-300 ${
-                                focusedField === 'message' ? 'border-primary shadow-[0_0_20px_rgba(var(--primary),0.2)]' : ''
-                              }`}
+                              className={`min-h-[140px] bg-background/50 border-border/50 rounded-xl resize-none transition-all duration-300 ${focusedField === 'message' ? 'border-primary shadow-[0_0_20px_rgba(var(--primary),0.2)]' : ''
+                                }`}
                               {...field}
                               onFocus={() => setFocusedField('message')}
                               onBlur={() => setFocusedField(null)}

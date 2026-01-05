@@ -1,4 +1,5 @@
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -6,54 +7,62 @@ import Footer from "@/components/home/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Bath, Bed, Coffee, ChefHat, Home, Armchair, TreePine, ArrowRight, MapPin, Calendar, Eye, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+
+// Fallback images for projects without images
+const fallbackImages = [
+  "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80",
+  "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&q=80",
+  "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&q=80",
+  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&q=80",
+];
 
 const categoryData: Record<string, { icon: any; gradient: string; accent: string }> = {
-  BATHROOM: { 
-    icon: Bath, 
+  BATHROOM: {
+    icon: Bath,
     gradient: "from-sky-400/20 via-blue-500/10 to-indigo-500/20",
     accent: "bg-sky-500"
   },
-  BEDROOM: { 
-    icon: Bed, 
+  BEDROOM: {
+    icon: Bed,
     gradient: "from-violet-400/20 via-purple-500/10 to-fuchsia-500/20",
     accent: "bg-violet-500"
   },
-  DINING: { 
-    icon: Coffee, 
+  DINING: {
+    icon: Coffee,
     gradient: "from-amber-400/20 via-orange-500/10 to-red-500/20",
     accent: "bg-amber-500"
   },
-  KITCHEN: { 
-    icon: ChefHat, 
+  KITCHEN: {
+    icon: ChefHat,
     gradient: "from-rose-400/20 via-red-500/10 to-pink-500/20",
     accent: "bg-rose-500"
   },
-  FACADE: { 
-    icon: Home, 
+  FACADE: {
+    icon: Home,
     gradient: "from-slate-400/20 via-zinc-500/10 to-stone-500/20",
     accent: "bg-slate-500"
   },
-  "LIVING ROOM": { 
-    icon: Armchair, 
+  "LIVING ROOM": {
+    icon: Armchair,
     gradient: "from-emerald-400/20 via-green-500/10 to-teal-500/20",
     accent: "bg-emerald-500"
   },
-  TERRACE: { 
-    icon: TreePine, 
+  TERRACE: {
+    icon: TreePine,
     gradient: "from-lime-400/20 via-green-500/10 to-emerald-500/20",
     accent: "bg-lime-500"
   },
 };
 
 // Category filter pill with 3D hover effect
-const CategoryPill = ({ 
-  category, 
-  isActive, 
-  onClick 
-}: { 
-  category: string; 
-  isActive: boolean; 
+const CategoryPill = ({
+  category,
+  isActive,
+  onClick
+}: {
+  category: string;
+  isActive: boolean;
   onClick: () => void;
 }) => {
   const ref = useRef<HTMLButtonElement>(null);
@@ -97,8 +106,8 @@ const CategoryPill = ({
       className={`
         relative flex flex-col items-center gap-3 p-6 rounded-2xl cursor-pointer
         transition-all duration-300 border-2 group
-        ${isActive 
-          ? `bg-gradient-to-br ${data.gradient} border-accent shadow-xl shadow-accent/20` 
+        ${isActive
+          ? `bg-gradient-to-br ${data.gradient} border-accent shadow-xl shadow-accent/20`
           : "bg-card/50 backdrop-blur-sm border-border/50 hover:border-accent/30 hover:shadow-lg"
         }
       `}
@@ -108,27 +117,27 @@ const CategoryPill = ({
         absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500
         bg-gradient-to-br ${data.gradient} blur-xl -z-10
       `} />
-      
+
       {/* Icon container */}
-      <div 
+      <div
         className={`
           w-16 h-16 rounded-xl flex items-center justify-center
           transition-all duration-300 relative overflow-hidden
-          ${isActive 
-            ? "bg-accent text-accent-foreground shadow-lg" 
+          ${isActive
+            ? "bg-accent text-accent-foreground shadow-lg"
             : "bg-secondary/80 text-muted-foreground group-hover:bg-accent/20 group-hover:text-accent"
           }
         `}
         style={{ transform: "translateZ(20px)" }}
       >
         <Icon className="w-8 h-8 relative z-10" />
-        
+
         {/* Shimmer effect */}
         <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       </div>
 
       {/* Label */}
-      <span 
+      <span
         className={`text-sm font-semibold tracking-wide transition-colors ${isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"}`}
         style={{ transform: "translateZ(15px)" }}
       >
@@ -146,25 +155,47 @@ const CategoryPill = ({
   );
 };
 
-// Project card with magazine-style layout
-const ProjectCard = ({ 
-  project, 
-  index, 
-  variant 
-}: { 
-  project: any; 
+// Project card with magazine-style layout and rotating images
+const ProjectCard = ({
+  project,
+  index,
+  variant
+}: {
+  project: any;
   index: number;
   variant: "large" | "medium" | "small";
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const mouseXSpring = useSpring(x, { stiffness: 200, damping: 25 });
   const mouseYSpring = useSpring(y, { stiffness: 200, damping: 25 });
 
   const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["5deg", "-5deg"]);
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-5deg", "5deg"]);
+
+  // Get images from project_images or use fallbacks
+  const getImageUrl = (storagePath: string) => {
+    const { data } = supabase.storage.from("project-images").getPublicUrl(storagePath);
+    return data.publicUrl;
+  };
+
+  const images = project.project_images?.length
+    ? project.project_images.map((img: any) => getImageUrl(img.storage_path))
+    : [fallbackImages[index % fallbackImages.length]];
+
+  // Rotate images every 3 seconds
+  useEffect(() => {
+    if (images.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [images.length]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!ref.current) return;
@@ -182,101 +213,108 @@ const ProjectCard = ({
   const catData = categoryData[categoryKey] || categoryData.FACADE;
   const Icon = catData.icon;
 
-  const sizeClasses = {
-    large: "md:col-span-2 md:row-span-2",
-    medium: "md:col-span-1 md:row-span-2",
-    small: "md:col-span-1 md:row-span-1",
-  };
-
+  // Random height variations for masonry effect
   const heightClasses = {
-    large: "aspect-square md:aspect-[4/3]",
-    medium: "aspect-[3/4]",
-    small: "aspect-video",
+    large: "h-[450px] md:h-[500px]",
+    medium: "h-[350px] md:h-[400px]",
+    small: "h-[280px] md:h-[320px]",
   };
 
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ delay: index * 0.08, duration: 0.5 }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-      className={`
-        relative group cursor-pointer rounded-3xl overflow-hidden
-        ${sizeClasses[variant]}
-      `}
-    >
-      {/* Background gradient */}
-      <div className={`
-        absolute inset-0 bg-gradient-to-br ${catData.gradient}
-        ${heightClasses[variant]}
-      `}>
-        {/* Decorative pattern */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 left-0 w-full h-full" 
-            style={{
-              backgroundImage: `radial-gradient(circle at 20% 30%, hsl(var(--accent) / 0.3) 0%, transparent 50%),
-                               radial-gradient(circle at 80% 70%, hsl(var(--primary) / 0.2) 0%, transparent 50%)`
-            }}
-          />
+    <Link to={`/project/${project.id}`} className="block mb-6 break-inside-avoid">
+      <motion.div
+        ref={ref}
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-50px" }}
+        transition={{ delay: index * 0.08, duration: 0.5 }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+        className={`
+          relative group cursor-pointer rounded-3xl overflow-hidden
+          ${heightClasses[variant]}
+        `}
+      >
+        {/* Rotating Images Background */}
+        <div className="absolute inset-0">
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={currentImageIndex}
+              src={images[currentImageIndex]}
+              alt={project.title}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          </AnimatePresence>
+
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10" />
         </div>
 
-        {/* Floating icon */}
-        <motion.div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-10"
-          animate={{ 
+        {/* Image dots indicator */}
+        {images.length > 1 && (
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            {images.map((_: string, i: number) => (
+              <div
+                key={i}
+                className={`h-1.5 rounded-full transition-all duration-300 ${i === currentImageIndex ? "w-4 bg-white" : "w-1.5 bg-white/50"
+                  }`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Category floating icon (subtle) */}
+        <motion.div
+          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-5"
+          animate={{
             rotate: [0, 360],
             scale: [1, 1.1, 1]
           }}
-          transition={{ 
+          transition={{
             rotate: { duration: 20, repeat: Infinity, ease: "linear" },
             scale: { duration: 4, repeat: Infinity, ease: "easeInOut" }
           }}
         >
-          <Icon className={`${variant === "large" ? "w-48 h-48" : variant === "medium" ? "w-32 h-32" : "w-24 h-24"} text-accent`} />
+          <Icon className={`${variant === "large" ? "w-32 h-32" : variant === "medium" ? "w-24 h-24" : "w-16 h-16"} text-white`} />
         </motion.div>
-      </div>
 
-      {/* Content overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      
-      {/* Top badges */}
-      <div className="absolute top-4 left-4 right-4 flex items-start justify-between" style={{ transform: "translateZ(30px)" }}>
-        <Badge className={`${catData.accent} text-white border-0 shadow-lg`}>
-          <Icon className="w-3 h-3 mr-1" />
-          {project.category || "General"}
-        </Badge>
-        
-        <Badge 
-          variant="outline" 
-          className="bg-background/80 backdrop-blur-md border-border/50 text-foreground"
+        {/* Top badges */}
+        <div className="absolute top-4 left-4 right-4 flex items-start justify-between z-10" style={{ transform: "translateZ(30px)" }}>
+          <Badge className={`${catData.accent} text-white border-0 shadow-lg`}>
+            <Icon className="w-3 h-3 mr-1" />
+            {project.category || "General"}
+          </Badge>
+
+          <Badge
+            variant="outline"
+            className="bg-white/90 backdrop-blur-md border-white/20 text-foreground"
+          >
+            {project.status === "completed" && <Sparkles className="w-3 h-3 mr-1 text-accent" />}
+            {project.status}
+          </Badge>
+        </div>
+
+        {/* Bottom content */}
+        <div
+          className="absolute bottom-0 left-0 right-0 p-5 z-10"
+          style={{ transform: "translateZ(25px)" }}
         >
-          {project.status === "completed" && <Sparkles className="w-3 h-3 mr-1 text-accent" />}
-          {project.status}
-        </Badge>
-      </div>
-
-      {/* Bottom content */}
-      <div 
-        className="absolute bottom-0 left-0 right-0 p-5 translate-y-8 group-hover:translate-y-0 transition-transform duration-500"
-        style={{ transform: "translateZ(25px)" }}
-      >
-        {/* Glass card */}
-        <div className="bg-card/90 backdrop-blur-xl rounded-2xl p-4 border border-border/50 shadow-2xl">
-          <h3 className={`font-heading font-bold text-foreground mb-2 ${variant === "large" ? "text-xl" : "text-base"}`}>
+          <h3 className={`font-heading font-bold text-white mb-2 ${variant === "large" ? "text-xl" : "text-base"}`}>
             {project.title}
           </h3>
-          
+
           {variant !== "small" && (
-            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+            <p className="text-sm text-white/70 mb-3 line-clamp-2">
               {project.description || "A stunning transformation that showcases our craftsmanship and attention to detail."}
             </p>
           )}
 
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-4 text-xs text-white/60">
             <span className="flex items-center gap-1">
               <MapPin className="w-3 h-3" />
               {project.address?.split(",")[0] || "Location"}
@@ -290,8 +328,8 @@ const ProjectCard = ({
           </div>
 
           {/* View button */}
-          <motion.div 
-            className="mt-4 flex items-center gap-2 text-accent font-medium text-sm group/btn"
+          <motion.div
+            className="mt-4 flex items-center gap-2 text-white font-medium text-sm group/btn"
             whileHover={{ x: 5 }}
           >
             <Eye className="w-4 h-4" />
@@ -299,11 +337,11 @@ const ProjectCard = ({
             <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
           </motion.div>
         </div>
-      </div>
 
-      {/* Hover glow */}
-      <div className="absolute inset-0 rounded-3xl ring-2 ring-transparent group-hover:ring-accent/30 transition-all duration-500" />
-    </motion.div>
+        {/* Hover glow */}
+        <div className="absolute inset-0 rounded-3xl ring-2 ring-transparent group-hover:ring-accent/30 transition-all duration-500" />
+      </motion.div>
+    </Link>
   );
 };
 
@@ -324,7 +362,7 @@ const Interior = () => {
 
   const categories = ["BATHROOM", "BEDROOM", "DINING", "KITCHEN", "FACADE", "LIVING ROOM", "TERRACE"];
 
-  const filteredProjects = activeCategory 
+  const filteredProjects = activeCategory
     ? projects?.filter(p => p.category?.toUpperCase() === activeCategory)
     : projects;
 
@@ -393,8 +431,8 @@ const Interior = () => {
               whileTap={{ scale: 0.95 }}
               className={`
                 px-6 py-4 rounded-2xl font-semibold text-sm transition-all duration-300 border-2
-                ${!activeCategory 
-                  ? "bg-accent text-accent-foreground border-accent shadow-lg shadow-accent/20" 
+                ${!activeCategory
+                  ? "bg-accent text-accent-foreground border-accent shadow-lg shadow-accent/20"
                   : "bg-card/50 backdrop-blur-sm border-border/50 text-muted-foreground hover:border-accent/30 hover:text-foreground"
                 }
               `}
@@ -444,7 +482,7 @@ const Interior = () => {
               ))}
             </div>
           ) : filteredProjects && filteredProjects.length > 0 ? (
-            <div className="grid md:grid-cols-3 auto-rows-fr gap-6">
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-6">
               {filteredProjects.map((project, index) => (
                 <ProjectCard
                   key={project.id}

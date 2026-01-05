@@ -96,7 +96,7 @@ const Services = () => {
   const visibleItems = getVisibleItems();
 
   return (
-    <section className="py-28 md:py-40 relative overflow-hidden bg-background">
+    <section className="py-10 md:py-20 relative overflow-hidden bg-background">
       <div className="container mx-auto px-6 relative z-10">
         {/* Section header */}
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-20 gap-8">
@@ -227,19 +227,19 @@ const Services = () => {
           ))}
         </div>
         <motion.div
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  className="mt-12 text-center"
-                >
-                  <a
-                    href="/sites"
-                    className="inline-flex items-center gap-2 text-base font-medium text-foreground/80 hover:text-accent transition-colors"
-                  >
-                    View all projects
-                    <ArrowRight className="w-4 h-4" />
-                  </a>
-                </motion.div>
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="mt-12 text-center"
+        >
+          <a
+            href="/sites"
+            className="inline-flex items-center gap-2 text-base font-medium text-foreground/80 hover:text-accent transition-colors"
+          >
+            View all projects
+            <ArrowRight className="w-4 h-4" />
+          </a>
+        </motion.div>
       </div>
     </section>
   );

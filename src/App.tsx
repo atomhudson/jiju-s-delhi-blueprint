@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Founder from "./pages/Founder";
 import Interior from "./pages/Interior";
+import ProjectDetail from "./pages/ProjectDetail";
 import Materials from "./pages/Materials";
 import Unique from "./pages/Unique";
 import Sites from "./pages/Sites";
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/founder" element={<Founder />} />
           <Route path="/interior" element={<Interior />} />
+          <Route path="/project/:id" element={<ProjectDetail />} />
           <Route path="/materials" element={<Materials />} />
           <Route path="/unique" element={<Unique />} />
           <Route path="/sites" element={<Sites />} />

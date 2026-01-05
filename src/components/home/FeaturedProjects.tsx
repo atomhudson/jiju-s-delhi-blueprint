@@ -95,7 +95,7 @@ const FeaturedProjects = () => {
 
   if (isLoading) {
     return (
-      <section id="projects" className="py-32 md:py-40 bg-background">
+      <section id="projects" className="py-10 md:py-20 bg-background">
         <div className="container mx-auto px-6">
           <div className="mb-20">
             <div className="h-6 w-32 bg-muted/30 rounded mb-4 animate-pulse" />
