@@ -178,10 +178,10 @@ const FeaturedProjects = () => {
               {visibleItems.map((project, index) => {
                 const statusConfig = getStatusConfig(project.status);
                 const StatusIcon = statusConfig.icon;
-                // Get image: try project_images first, then image_url column, then null
-                const firstProjectImage = project.project_images?.[0];
-                const imageFromProjectImages = firstProjectImage ? getImageUrl(firstProjectImage.storage_path) : null;
-                const image = imageFromProjectImages || project.image_url || null;
+                // Get image from project_images relation
+                const projectImages = project.project_images || [];
+                const firstImage = projectImages[0];
+                const image = firstImage ? getImageUrl(firstImage.storage_path) : null;
 
                 // Different unevenness pattern: wave-like
                 const heightPatterns = ['h-[460px]', 'h-[380px]', 'h-[420px]'];

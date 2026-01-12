@@ -32,12 +32,11 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
-// Fallback images
-const fallbackImages = [
-    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80",
-    "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80",
-    "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&q=80",
-];
+// Placeholder image when no images uploaded
+const placeholderImage = {
+    url: null,
+    caption: "No images uploaded yet"
+};
 
 const categoryData: Record<string, { icon: any; gradient: string; accent: string }> = {
     BATHROOM: { icon: Bath, gradient: "from-sky-400/20 via-blue-500/10 to-indigo-500/20", accent: "bg-sky-500" },
@@ -160,17 +159,17 @@ const ProjectDetail = () => {
         return data.publicUrl;
     };
 
-    // Get images from project_images first, fallback to project.image_url, then to demo fallbacks
-    const images = project?.project_images?.length
-        ? project.project_images
+    // Get images from project_images - show only uploaded images, no fallbacks
+    const projectImages = project?.project_images || [];
+    const images = projectImages.length > 0
+        ? projectImages
             .map((img: any) => ({
                 url: getImageUrl(img.storage_path),
-                caption: img.caption
+                caption: img.caption,
+                category: img.category
             }))
             .filter((img: any) => img.url !== null)
-        : project?.image_url
-            ? [{ url: project.image_url, caption: null }]
-            : fallbackImages.map(url => ({ url, caption: null }));
+        : []; // No images if none uploaded
 
     const categoryKey = project?.category?.toUpperCase() || "FACADE";
     const catData = categoryData[categoryKey] || categoryData.FACADE;
@@ -371,33 +370,44 @@ const ProjectDetail = () => {
                     >
                         {/* Main Image */}
                         <div
-                            className="relative aspect-[16/9] md:aspect-[21/9] rounded-3xl overflow-hidden bg-secondary cursor-pointer group"
-                            onClick={() => setLightboxOpen(true)}
+                            className={`relative aspect-[16/9] md:aspect-[21/9] rounded-3xl overflow-hidden bg-secondary ${images.length > 0 ? 'cursor-pointer' : ''} group`}
+                            onClick={() => images.length > 0 && setLightboxOpen(true)}
                         >
-                            <AnimatePresence mode="wait">
-                                <motion.img
-                                    key={selectedImageIndex}
-                                    src={images[selectedImageIndex]?.url}
-                                    alt={`${project.title} - Image ${selectedImageIndex + 1}`}
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{ duration: 0.3 }}
-                                    className="w-full h-full object-cover"
-                                />
-                            </AnimatePresence>
-
-                            {/* Expand overlay */}
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm rounded-full p-3">
-                                    <Expand className="w-6 h-6 text-foreground" />
+                            {images.length > 0 ? (
+                                <AnimatePresence mode="wait">
+                                    <motion.img
+                                        key={selectedImageIndex}
+                                        src={images[selectedImageIndex]?.url}
+                                        alt={`${project.title} - Image ${selectedImageIndex + 1}`}
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </AnimatePresence>
+                            ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-secondary via-secondary/80 to-accent/10">
+                                    <Home className="w-20 h-20 text-muted-foreground/30 mb-4" />
+                                    <p className="text-muted-foreground text-lg">No images uploaded yet</p>
                                 </div>
-                            </div>
+                            )}
 
-                            {/* Image counter */}
-                            <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-full text-white text-sm">
-                                {selectedImageIndex + 1} / {images.length}
-                            </div>
+                            {/* Expand overlay - only show when images exist */}
+                            {images.length > 0 && (
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm rounded-full p-3">
+                                        <Expand className="w-6 h-6 text-foreground" />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Image counter - only show when images exist */}
+                            {images.length > 0 && (
+                                <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-full text-white text-sm">
+                                    {selectedImageIndex + 1} / {images.length}
+                                </div>
+                            )}
 
                             {/* Navigation arrows */}
                             {images.length > 1 && (
