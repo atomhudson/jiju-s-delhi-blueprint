@@ -255,7 +255,7 @@ const ProjectDetail = () => {
     const pageTitle = `${project.title} | ${project.category || 'Interior'} Project | Stambha Constructions`;
     const pageDescription = project.description ||
         `View our ${project.category || 'stunning'} project at ${project.address}. Professional construction and interior design by Stambha Constructions, Delhi's trusted builder with 50+ years of experience.`;
-    const pageImage = images[0]?.url || fallbackImages[0];
+    const pageImage = images[0]?.url || null;
     const pageUrl = window.location.href;
 
     return (
@@ -537,12 +537,11 @@ const ProjectDetail = () => {
 
                             <div className="grid md:grid-cols-3 gap-6">
                                 {relatedProjects.map((relProject: any, index: number) => {
-                                    const relImages = relProject.project_images?.length
-                                        ? relProject.project_images
-                                        : [{ storage_path: null }];
-                                    const relImageUrl = relImages[0].storage_path
-                                        ? getImageUrl(relImages[0].storage_path)
-                                        : fallbackImages[index % fallbackImages.length];
+                                    const relImages = relProject.project_images || [];
+                                    const firstRelImage = relImages[0];
+                                    const relImageUrl = firstRelImage?.storage_path
+                                        ? getImageUrl(firstRelImage.storage_path)
+                                        : null;
                                     const relSlug = createProjectSlug(relProject.title, relProject.id);
 
                                     return (
@@ -551,11 +550,17 @@ const ProjectDetail = () => {
                                                 whileHover={{ y: -4 }}
                                                 className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer"
                                             >
-                                                <img
-                                                    src={relImageUrl}
-                                                    alt={relProject.title}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                />
+                                                {relImageUrl ? (
+                                                    <img
+                                                        src={relImageUrl}
+                                                        alt={relProject.title}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gradient-to-br from-secondary via-secondary/80 to-accent/10 flex items-center justify-center">
+                                                        <Home className="w-12 h-12 text-muted-foreground/30" />
+                                                    </div>
+                                                )}
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                                                 <div className="absolute bottom-4 left-4 right-4">
                                                     <h3 className="text-white font-heading font-semibold">{relProject.title}</h3>
