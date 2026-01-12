@@ -22,6 +22,9 @@ import {
   Home, Sparkles, Layers, Settings, LayoutDashboard, ChevronRight,
   Image, Shield, Hammer, Heart, Eye, Building, TreePine, TrendingUp, BarChart3
 } from "lucide-react";
+import { LocationAutocomplete } from "@/components/ui/LocationAutocomplete";
+import { ColorSwatchPicker, brandColorPresets, accentColorPresets, gradientPresets } from "@/components/ui/ColorPicker";
+import { MultiImageUpload } from "@/components/ui/MultiImageUpload";
 
 // Sidebar menu items
 const menuItems = [
@@ -49,7 +52,7 @@ const Admin = () => {
   const queryClient = useQueryClient();
 
   // Form states
-  const [projectForm, setProjectForm] = useState({ title: "", address: "", lat: "", lon: "", status: "ongoing" as "ongoing" | "completed", category: "FACADE", description: "" });
+  const [projectForm, setProjectForm] = useState({ title: "", address: "", lat: "", lon: "", status: "ongoing" as "ongoing" | "completed", category: "FACADE", description: "", images: [] as string[] });
   const [serviceForm, setServiceForm] = useState({ title: "", description: "", image_url: "", display_order: 0 });
   const [teamForm, setTeamForm] = useState({ name: "", designation: "", image_url: "", description: "", quote: "", experience: "", is_founder: false, linkedin_url: "", email: "", display_order: 0 });
   const [milestoneForm, setMilestoneForm] = useState({ year: "", title: "", description: "", highlight: "", display_order: 0 });
@@ -75,7 +78,21 @@ const Admin = () => {
   }, [navigate]);
 
   // Fetch all data
-  const { data: projects } = useQuery({ queryKey: ["admin-projects"], queryFn: async () => { const { data, error } = await supabase.from("projects").select("*").order("created_at", { ascending: false }); if (error) throw error; return data; }, enabled: !!user });
+  const { data: projects } = useQuery({
+    queryKey: ["admin-projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select(`
+          *,
+          project_images (id, storage_path, caption)
+        `)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user
+  });
   const { data: inquiries } = useQuery({ queryKey: ["admin-inquiries"], queryFn: async () => { const { data, error } = await supabase.from("inquiries").select("*").order("created_at", { ascending: false }); if (error) throw error; return data; }, enabled: !!user });
   const { data: services } = useQuery({ queryKey: ["admin-services"], queryFn: async () => { const { data, error } = await supabase.from("services").select("*").order("display_order"); if (error) throw error; return data; }, enabled: !!user });
   const { data: teamMembers } = useQuery({ queryKey: ["admin-team"], queryFn: async () => { const { data, error } = await supabase.from("team_members").select("*").order("display_order"); if (error) throw error; return data; }, enabled: !!user });
@@ -141,7 +158,55 @@ const Admin = () => {
   });
 
   // Mutations
-  const addProject = useMutation({ mutationFn: async (project: typeof projectForm) => { const { error } = await supabase.from("projects").insert([{ title: project.title, address: project.address, latitude: parseFloat(project.lat) || 28.6139, longitude: parseFloat(project.lon) || 77.2090, status: project.status, category: project.category, description: project.description }]); if (error) throw error; }, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-projects"] }); toast.success("Project added"); setProjectForm({ title: "", address: "", lat: "", lon: "", status: "ongoing", category: "FACADE", description: "" }); }, onError: (e: any) => toast.error(e.message) });
+  const addProject = useMutation({
+    mutationFn: async (project: typeof projectForm) => {
+      // Insert the project first
+      const { data: projectData, error } = await supabase
+        .from("projects")
+        .insert([{
+          title: project.title,
+          address: project.address,
+          latitude: parseFloat(project.lat) || 28.6139,
+          longitude: parseFloat(project.lon) || 77.2090,
+          status: project.status,
+          category: project.category,
+          description: project.description
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // If there are images, insert them into project_images table
+      if (project.images.length > 0 && projectData) {
+        // Convert category to lowercase enum value (e.g., "LIVING ROOM" -> "living_room")
+        const categoryEnum = project.category.toLowerCase().replace(/\s+/g, '_');
+
+        const imageInserts = project.images.map((url) => ({
+          project_id: projectData.id,
+          storage_path: url,
+          category: categoryEnum as any
+        }));
+
+        const { error: imageError } = await supabase
+          .from("project_images")
+          .insert(imageInserts);
+
+        if (imageError) {
+          console.error("Failed to save some images:", imageError);
+        }
+      }
+
+      return projectData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-projects"] });
+      toast.success("Project added successfully!");
+      setProjectForm({ title: "", address: "", lat: "", lon: "", status: "ongoing", category: "FACADE", description: "", images: [] });
+    },
+    onError: (e: any) => toast.error(e.message)
+  });
+
   const deleteProject = useMutation({ mutationFn: async (id: string) => { const { error } = await supabase.from("projects").delete().eq("id", id); if (error) throw error; }, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-projects"] }); toast.success("Deleted"); } });
   const addService = useMutation({ mutationFn: async (s: typeof serviceForm) => { const { error } = await supabase.from("services").insert([s]); if (error) throw error; }, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-services"] }); toast.success("Service added"); setServiceForm({ title: "", description: "", image_url: "", display_order: 0 }); }, onError: (e: any) => toast.error(e.message) });
   const deleteService = useMutation({ mutationFn: async (id: string) => { const { error } = await supabase.from("services").delete().eq("id", id); if (error) throw error; }, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-services"] }); toast.success("Deleted"); } });
@@ -383,9 +448,23 @@ const Admin = () => {
                     <Label>Title *</Label>
                     <Input value={projectForm.title} onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })} placeholder="Project name" required />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Address *</Label>
-                    <Input value={projectForm.address} onChange={(e) => setProjectForm({ ...projectForm, address: e.target.value })} placeholder="Location" required />
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Location * (type to search)</Label>
+                    <LocationAutocomplete
+                      value={projectForm.address}
+                      onChange={(address, lat, lng) => setProjectForm({
+                        ...projectForm,
+                        address,
+                        lat: lat.toString(),
+                        lon: lng.toString()
+                      })}
+                      placeholder="Start typing an address in India..."
+                    />
+                    {projectForm.lat && projectForm.lon && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        📍 Coordinates: {parseFloat(projectForm.lat).toFixed(6)}, {parseFloat(projectForm.lon).toFixed(6)}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Status</Label>
@@ -410,6 +489,28 @@ const Admin = () => {
                     <Label>Description</Label>
                     <Textarea value={projectForm.description} onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })} placeholder="Project description..." rows={3} />
                   </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Project Images</Label>
+                    <MultiImageUpload
+                      onUpload={(urls) => setProjectForm({ ...projectForm, images: [...projectForm.images, ...urls] })}
+                      maxFiles={10}
+                      bucketName="project-images"
+                    />
+                    {projectForm.images.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {projectForm.images.map((url, i) => (
+                          <div key={i} className="relative group">
+                            <img src={url} alt={`Uploaded ${i + 1}`} className="w-16 h-16 object-cover rounded-lg" />
+                            <button
+                              type="button"
+                              onClick={() => setProjectForm({ ...projectForm, images: projectForm.images.filter((_, idx) => idx !== i) })}
+                              className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                            >×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <Button type="submit" disabled={addProject.isPending} className="md:col-span-2">
                     {addProject.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     Add Project
@@ -420,7 +521,22 @@ const Admin = () => {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {projects?.map(project => (
-                <Card key={project.id} className="group hover:shadow-md transition-all">
+                <Card key={project.id} className="group hover:shadow-md transition-all overflow-hidden">
+                  {/* Show first image if available */}
+                  {project.project_images && project.project_images.length > 0 && (
+                    <div className="relative h-32 overflow-hidden">
+                      <img
+                        src={project.project_images[0].storage_path}
+                        alt={project.title}
+                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      />
+                      {project.project_images.length > 1 && (
+                        <span className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                          +{project.project_images.length - 1} more
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
@@ -649,7 +765,14 @@ const Admin = () => {
                 <form onSubmit={(e) => { e.preventDefault(); addBrandPartner.mutate(brandForm); }} className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2"><Label>Brand Name *</Label><Input value={brandForm.name} onChange={(e) => setBrandForm({ ...brandForm, name: e.target.value })} required /></div>
                   <div className="space-y-2"><Label>Tagline</Label><Input value={brandForm.tagline} onChange={(e) => setBrandForm({ ...brandForm, tagline: e.target.value })} /></div>
-                  <div className="space-y-2"><Label>Color Gradient</Label><Input value={brandForm.color_gradient} onChange={(e) => setBrandForm({ ...brandForm, color_gradient: e.target.value })} placeholder="from-blue-500/20 to-blue-600/20" /></div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Brand Color</Label>
+                    <ColorSwatchPicker
+                      presets={brandColorPresets}
+                      value={brandForm.color_gradient}
+                      onChange={(value) => setBrandForm({ ...brandForm, color_gradient: value })}
+                    />
+                  </div>
                   <div className="space-y-2"><Label>Order</Label><Input type="number" value={brandForm.display_order} onChange={(e) => setBrandForm({ ...brandForm, display_order: parseInt(e.target.value) || 0 })} /></div>
                   <Button type="submit" disabled={addBrandPartner.isPending} className="md:col-span-2">{addBrandPartner.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Add Brand</Button>
                 </form>
@@ -681,7 +804,22 @@ const Admin = () => {
                 <form onSubmit={(e) => { e.preventDefault(); addInteriorCategory.mutate(categoryForm); }} className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2"><Label>Name * (e.g., BATHROOM)</Label><Input value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })} required /></div>
                   <div className="space-y-2"><Label>Icon</Label><Select value={categoryForm.icon} onValueChange={(v) => setCategoryForm({ ...categoryForm, icon: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{["Bath", "Bed", "Coffee", "ChefHat", "Home", "Armchair", "TreePine"].map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent></Select></div>
-                  <div className="space-y-2"><Label>Accent Color Class</Label><Input value={categoryForm.accent} onChange={(e) => setCategoryForm({ ...categoryForm, accent: e.target.value })} placeholder="bg-sky-500" /></div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Accent Color</Label>
+                    <ColorSwatchPicker
+                      presets={accentColorPresets}
+                      value={categoryForm.accent}
+                      onChange={(value) => setCategoryForm({ ...categoryForm, accent: value })}
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Background Gradient</Label>
+                    <ColorSwatchPicker
+                      presets={gradientPresets}
+                      value={categoryForm.gradient}
+                      onChange={(value) => setCategoryForm({ ...categoryForm, gradient: value })}
+                    />
+                  </div>
                   <div className="space-y-2"><Label>Order</Label><Input type="number" value={categoryForm.display_order} onChange={(e) => setCategoryForm({ ...categoryForm, display_order: parseInt(e.target.value) || 0 })} /></div>
                   <Button type="submit" disabled={addInteriorCategory.isPending} className="md:col-span-2">{addInteriorCategory.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Add Category</Button>
                 </form>

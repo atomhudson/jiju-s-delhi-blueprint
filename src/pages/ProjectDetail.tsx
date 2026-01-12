@@ -148,18 +148,29 @@ const ProjectDetail = () => {
         enabled: !!project?.category,
     });
 
-    // Get images array
-    const getImageUrl = (storagePath: string) => {
+    // Get images array - handle both full URLs and storage paths
+    const getImageUrl = (storagePath: string | undefined | null): string | null => {
+        if (!storagePath) return null;
+        // If it's already a full URL, return as-is
+        if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
+            return storagePath;
+        }
+        // Otherwise, get the public URL from Supabase storage
         const { data } = supabase.storage.from("project-images").getPublicUrl(storagePath);
         return data.publicUrl;
     };
 
+    // Get images from project_images first, fallback to project.image_url, then to demo fallbacks
     const images = project?.project_images?.length
-        ? project.project_images.map((img: any) => ({
-            url: getImageUrl(img.storage_path),
-            caption: img.caption
-        }))
-        : fallbackImages.map(url => ({ url, caption: null }));
+        ? project.project_images
+            .map((img: any) => ({
+                url: getImageUrl(img.storage_path),
+                caption: img.caption
+            }))
+            .filter((img: any) => img.url !== null)
+        : project?.image_url
+            ? [{ url: project.image_url, caption: null }]
+            : fallbackImages.map(url => ({ url, caption: null }));
 
     const categoryKey = project?.category?.toUpperCase() || "FACADE";
     const catData = categoryData[categoryKey] || categoryData.FACADE;

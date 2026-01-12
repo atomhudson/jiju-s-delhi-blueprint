@@ -63,12 +63,17 @@ export const useProjectLike = (projectId: string) => {
 
   const checkIfLiked = useCallback(async (): Promise<boolean> => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('project_likes')
         .select('id')
         .eq('project_id', projectId)
         .eq('visitor_id', visitorId)
-        .single();
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error checking like status:', error);
+        return false;
+      }
       return !!data;
     } catch {
       return false;

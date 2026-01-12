@@ -127,6 +127,7 @@ export type Database = {
           division: string | null
           end_date: string | null
           id: string
+          image_url: string | null
           latitude: number | null
           longitude: number | null
           start_date: string | null
@@ -142,6 +143,7 @@ export type Database = {
           division?: string | null
           end_date?: string | null
           id?: string
+          image_url?: string | null
           latitude?: number | null
           longitude?: number | null
           start_date?: string | null
@@ -157,6 +159,7 @@ export type Database = {
           division?: string | null
           end_date?: string | null
           id?: string
+          image_url?: string | null
           latitude?: number | null
           longitude?: number | null
           start_date?: string | null

@@ -27,9 +27,12 @@ const FeaturedProjects = () => {
   });
 
   // Helper to get public URL from storage path or return direct URL
-  const getImageUrl = (storagePath: string) => {
+  const getImageUrl = (storagePath: string | undefined | null): string | null => {
+    if (!storagePath) return null;
     // Check if it's already a full URL (for external/demo images)
-    if (storagePath.startsWith('http')) return storagePath;
+    if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
+      return storagePath;
+    }
     const { data } = supabase.storage.from("project-images").getPublicUrl(storagePath);
     return data.publicUrl;
   };
@@ -175,9 +178,10 @@ const FeaturedProjects = () => {
               {visibleItems.map((project, index) => {
                 const statusConfig = getStatusConfig(project.status);
                 const StatusIcon = statusConfig.icon;
-                // Get image: first try image_url column, then project_images, then null
+                // Get image: try project_images first, then image_url column, then null
                 const firstProjectImage = project.project_images?.[0];
-                const image = project.image_url || (firstProjectImage ? getImageUrl(firstProjectImage.storage_path) : null);
+                const imageFromProjectImages = firstProjectImage ? getImageUrl(firstProjectImage.storage_path) : null;
+                const image = imageFromProjectImages || project.image_url || null;
 
                 // Different unevenness pattern: wave-like
                 const heightPatterns = ['h-[460px]', 'h-[380px]', 'h-[420px]'];

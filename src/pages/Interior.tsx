@@ -179,16 +179,21 @@ const ProjectCard = ({
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-5deg", "5deg"]);
 
   // Get images from project_images or use image_url fallback
-  const getImageUrl = (storagePath: string) => {
+  const getImageUrl = (storagePath: string | undefined | null): string | null => {
+    if (!storagePath) return null;
     // Check if it's already a full URL (for external/demo images)
-    if (storagePath.startsWith('http')) return storagePath;
+    if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
+      return storagePath;
+    }
     const { data } = supabase.storage.from("project-images").getPublicUrl(storagePath);
     return data.publicUrl;
   };
 
-  // Get images: project_images first, then image_url column as fallback
+  // Get images from project_images table, fallback to project.image_url
   const images = project.project_images?.length
-    ? project.project_images.map((img: any) => getImageUrl(img.storage_path))
+    ? project.project_images
+      .map((img: any) => getImageUrl(img.storage_path))
+      .filter((url: string | null): url is string => url !== null)
     : (project.image_url ? [project.image_url] : []);
 
   // Rotate images every 3 seconds
